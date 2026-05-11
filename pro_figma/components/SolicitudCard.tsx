@@ -41,110 +41,211 @@ const ESTADO_CONFIG: Record<string, { label: string; color: string; dot: string 
     completada: { label: "Completada", color: "#10b981", dot: "#10b981" },
 };
 
+const normalizeEstado = (estado: string) =>
+    (estado || "").toLowerCase().replace(/\s+/g, "-");
+
 interface Props {
     solicitud: Solicitud;
     onOfrecer: (s: Solicitud) => void;
 }
 
 export default function SolicitudCard({ solicitud, onOfrecer }: Props) {
-    const { isGuest } = useAuth();
-    const estado = ESTADO_CONFIG[solicitud.estado];
+    const { user } = useAuth();
+
+    const isGuest = !user;
+
+    // 🔥 FIX IMPORTANTE: normalizar rol seguro
+    const role = user?.rol?.toLowerCase() ?? "";
+
+    // 🔥 SOLO VOLUNTARIO Y ADMIN PUEDEN AYUDAR
+    const puedeAyudar =
+        role === "voluntario" || role === "admin";
+
+    const estadoKey = normalizeEstado(solicitud.estado);
+
+    const estado =
+        ESTADO_CONFIG[estadoKey] ?? {
+            label: "Desconocido",
+            color: "#9ca3af",
+            dot: "#9ca3af",
+        };
+
     const catBg = CATEGORIA_COLORS[solicitud.categoria] ?? "#f3f4f6";
     const catText = CATEGORIA_TEXT[solicitud.categoria] ?? "#374151";
 
     return (
-        <div className="animate-fadeUp" style={{
-            background: "var(--surface)",
-            border: "1.5px solid var(--border)",
-            borderRadius: "var(--radius)",
-            padding: 20,
-            display: "flex", flexDirection: "column", gap: 12,
-            transition: "box-shadow 0.2s",
-        }}
-            onMouseEnter={e => (e.currentTarget.style.boxShadow = "var(--shadow-md)")}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}
+        <div
+            className="animate-fadeUp"
+            style={{
+                background: "var(--surface)",
+                border: "1.5px solid var(--border)",
+                borderRadius: "var(--radius)",
+                padding: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                transition: "box-shadow 0.2s",
+            }}
         >
-            {/* Tags */}
+            {/* TAGS */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span style={{
-                    padding: "3px 10px", borderRadius: "var(--radius-full)",
-                    fontSize: 12, fontWeight: 500,
-                    background: catBg, color: catText,
-                }}>{solicitud.categoria}</span>
-                <span style={{
-                    display: "flex", alignItems: "center", gap: 5,
-                    padding: "3px 10px", borderRadius: "var(--radius-full)",
-                    fontSize: 12, fontWeight: 500,
-                    border: "1.5px solid var(--border)", color: "var(--text-secondary)",
-                }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: estado.dot, display: "inline-block" }} />
+                <span
+                    style={{
+                        padding: "3px 10px",
+                        borderRadius: "var(--radius-full)",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        background: catBg,
+                        color: catText,
+                    }}
+                >
+                    {solicitud.categoria}
+                </span>
+
+                <span
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "3px 10px",
+                        borderRadius: "var(--radius-full)",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        border: "1.5px solid var(--border)",
+                        color: "var(--text-secondary)",
+                    }}
+                >
+                    <span
+                        style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            background: estado.dot,
+                            display: "inline-block",
+                        }}
+                    />
                     {estado.label}
                 </span>
             </div>
 
-            {/* Título */}
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
+            {/* TITULO */}
+            <h3 style={{ fontSize: 17, fontWeight: 700 }}>
                 {solicitud.titulo}
             </h3>
 
-            {/* Autor */}
+            {/* AUTOR */}
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: "#e5e7eb", fontSize: 11, fontWeight: 600,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "var(--text-secondary)",
-                }}>{solicitud.autorIniciales}</div>
-                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{solicitud.autorNombre}</span>
+                <div
+                    style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "#e5e7eb",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 11,
+                        fontWeight: 600,
+                    }}
+                >
+                    {solicitud.autorIniciales}
+                </div>
+                <span style={{ fontSize: 13 }}>
+                    {solicitud.autorNombre}
+                </span>
             </div>
 
-            {/* Descripción */}
-            <p style={{
-                fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6,
-                display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
-            }}>
+            {/* DESCRIPCION */}
+            <p
+                style={{
+                    fontSize: 14,
+                    color: "var(--text-secondary)",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                }}
+            >
                 {solicitud.descripcion}
             </p>
 
-            {/* Meta */}
+            {/* META */}
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <MetaRow icon="pin">{solicitud.ubicacion}</MetaRow>
                 <MetaRow icon="calendar">{solicitud.fecha}</MetaRow>
-                <MetaRow icon="users">{solicitud.voluntariosActuales} de {solicitud.voluntariosNecesarios} voluntarios</MetaRow>
+                <MetaRow icon="users">
+                    {solicitud.voluntariosActuales} de{" "}
+                    {solicitud.voluntariosNecesarios}
+                </MetaRow>
             </div>
 
-            {/* Botón */}
+            {/* BOTON (REGLA FINAL CORRECTA) */}
             {solicitud.estado !== "completada" && (
                 <button
-                    onClick={() => !isGuest && onOfrecer(solicitud)}
-                    disabled={isGuest}
+                    onClick={() => {
+    if (!user) return;
+    if (!puedeAyudar) return;
+
+    return onOfrecer(solicitud);
+}}
+                    disabled={!puedeAyudar}
                     style={{
-                        width: "100%", padding: "12px",
-                        background: isGuest ? "#e5e7eb" : "var(--text-primary)",
-                        color: isGuest ? "var(--text-muted)" : "white",
-                        border: "none", borderRadius: "var(--radius-sm)",
-                        fontSize: 15, fontWeight: 600,
-                        cursor: isGuest ? "not-allowed" : "pointer",
-                        transition: "opacity 0.15s", marginTop: 4,
+                        width: "100%",
+                        padding: "12px",
+                        background: !puedeAyudar
+                            ? "#e5e7eb"
+                            : "var(--text-primary)",
+                        color: !puedeAyudar
+                            ? "var(--text-muted)"
+                            : "white",
+                        border: "none",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: !puedeAyudar
+                            ? "not-allowed"
+                            : "pointer",
+                        opacity: !puedeAyudar ? 0.7 : 1,
+                        marginTop: 4,
                     }}
-                    onMouseEnter={e => { if (!isGuest) e.currentTarget.style.opacity = "0.85"; }}
-                    onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
                 >
-                    {isGuest ? "Inicia sesión para ayudar" : "Ofrecer Ayuda"}
+                    {!puedeAyudar
+                        ? "Solo puedes revisar solicitudes"
+                        : "Ofrecer Ayuda"}
                 </button>
             )}
         </div>
     );
 }
 
-function MetaRow({ icon, children }: { icon: string; children: React.ReactNode }) {
+/* META ROW */
+function MetaRow({
+    icon,
+    children,
+}: {
+    icon: string;
+    children: React.ReactNode;
+}) {
     const icons: Record<string, React.ReactNode> = {
-        pin: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>,
-        calendar: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>,
-        users: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>,
+        pin: (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13z" />
+            </svg>
+        ),
+        calendar: (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+            </svg>
+        ),
+        users: (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="9" cy="7" r="4" />
+            </svg>
+        ),
     };
+
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-secondary)" }}>
+        <div style={{ display: "flex", gap: 6, fontSize: 13 }}>
             {icons[icon]}
             {children}
         </div>

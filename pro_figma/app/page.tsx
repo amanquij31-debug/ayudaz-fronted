@@ -7,70 +7,59 @@ import SolicitudCard, { Solicitud } from "@/components/SolicitudCard";
 import RankingKI, { Guerrero } from "@/components/RankingKI";
 import ModalSolicitar from "@/components/ModalSolicitar";
 import ModalOfrecer from "@/components/ModalOfrecer";
+import { api } from "@/lib/api";
 
 const CATEGORIAS = ["Todas", "Alimentos", "Transporte", "Cuidado de Niños", "Educación", "Salud", "Hogar", "Otro"];
-
-// --- DATOS DE EJEMPLO (reemplazar con llamadas a tu API Spring Boot) ---
-const SOLICITUDES_DEMO: Solicitud[] = [
-  {
-    id: "1", titulo: "Necesito transporte para cita médica",
-    categoria: "Transporte", estado: "abierta",
-    descripcion: "Tengo una cita médica importante el próximo viernes y no tengo forma de llegar al hospital. Busco alguien que pueda llevarme y traerme de vuelta.",
-    ubicacion: "SJL - Centro", fecha: "25 mar 2026",
-    autorNombre: "María González", autorIniciales: "MG",
-    voluntariosActuales: 0, voluntariosNecesarios: 1,
-  },
-  {
-    id: "2", titulo: "Apoyo con clases de matemáticas para mi hijo",
-    categoria: "Educación", estado: "en-progreso",
-    descripcion: "Mi hijo está en sexto grado y necesita refuerzo en matemáticas. Busco alguien con paciencia que pueda darle clases 2 veces por semana.",
-    ubicacion: "SJL - Zárate", fecha: "24 mar 2026",
-    autorNombre: "Carlos Ramírez", autorIniciales: "CR",
-    voluntariosActuales: 1, voluntariosNecesarios: 1,
-  },
-  {
-    id: "3", titulo: "Comida para familia numerosa",
-    categoria: "Alimentos", estado: "abierta",
-    descripcion: "Somos una familia de 6 personas y estamos pasando por dificultades económicas. Agradecería cualquier tipo de alimentos no perecederos o despensa básica.",
-    ubicacion: "SJL - Canto Grande", fecha: "23 mar 2026",
-    autorNombre: "Ana López", autorIniciales: "AL",
-    voluntariosActuales: 1, voluntariosNecesarios: 2,
-  },
-  {
-    id: "4", titulo: "Ayuda para reparar techo con goteras",
-    categoria: "Hogar", estado: "abierta",
-    descripcion: "Necesito ayuda para reparar el techo de mi casa que tiene goteras. Busco personas con experiencia en construcción o impermeabilización.",
-    ubicacion: "SJL - Las Flores", fecha: "22 mar 2026",
-    autorNombre: "Pedro Hernández", autorIniciales: "PH",
-    voluntariosActuales: 2, voluntariosNecesarios: 3,
-  },
-  {
-    id: "5", titulo: "Cuidado de niños por las tardes",
-    categoria: "Cuidado de Niños", estado: "completada",
-    descripcion: "Necesito que alguien pueda cuidar a mis dos hijos (5 y 7 años) de lunes a viernes de 2pm a 6pm mientras trabajo.",
-    ubicacion: "SJL - Campoy", fecha: "20 mar 2026",
-    autorNombre: "Laura Martínez", autorIniciales: "LM",
-    voluntariosActuales: 1, voluntariosNecesarios: 1,
-  },
-];
-
-const GUERREROS_DEMO: Guerrero[] = [
-  { uid: "1", nombre: "Isabel Fernández", iniciales: "IF", puntosKI: 23, nivel: 20, titulo: "Ultra Instinto", color: "#dbeafe" },
-  { uid: "2", nombre: "Miguel Torres", iniciales: "MT", puntosKI: 18, nivel: 16, titulo: "Super Saiyajin Blue", color: "#fce7f3" },
-  { uid: "3", nombre: "Carmen Ruiz", iniciales: "CR", puntosKI: 15, nivel: 13, titulo: "Super Saiyajin God", color: "#d1fae5" },
-  { uid: "4", nombre: "José Sánchez", iniciales: "JS", puntosKI: 12, nivel: 10, titulo: "Super Saiyajin 3", color: "#fef3c7" },
-  { uid: "5", nombre: "Patricia Morales", iniciales: "PM", puntosKI: 10, nivel: 9, titulo: "Super Saiyajin 2", color: "#ede9fe" },
-  { uid: "6", nombre: "Luis García", iniciales: "LG", puntosKI: 8, nivel: 7, titulo: "Super Saiyajin 2", color: "#fee2e2" },
-  { uid: "7", nombre: "Ana López", iniciales: "AL", puntosKI: 6, nivel: 5, titulo: "Super Saiyajin", color: "#cffafe" },
-  { uid: "8", nombre: "Fernando Castro", iniciales: "FC", puntosKI: 5, nivel: 4, titulo: "Super Saiyajin", color: "#f3f4f6" },
-];
 
 export default function HomePage() {
   const { user, isGuest, loading } = useAuth();
   const router = useRouter();
 
-  const [solicitudes] = useState<Solicitud[]>(SOLICITUDES_DEMO);
-  const [guerreros] = useState<Guerrero[]>(GUERREROS_DEMO);
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [guerreros, setGuerreros] = useState<Guerrero[]>([]);
+  const [userRol, setUserRol] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getSolicitudes().then(data => {
+      // Mapea los campos del backend al formato del frontend
+      const mapeadas = data.map((s: any) => ({
+        id: String(s.idSolicitud),
+        titulo: s.titulo,
+        categoria: s.categoria?.nombreCategoria ?? "Otro",
+        descripcion: s.descripcion,
+        ubicacion: s.ubicacion ?? "SJL",
+        estado: s.estado?.nombreEstado?.toLowerCase().replace("_", "-") ?? "abierta",
+        autorNombre: s.usuario?.nombres ?? "Anónimo",
+        autorIniciales: s.usuario?.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2) ?? "??",
+        fecha: new Date(s.fechaSolicitud).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" }),
+        voluntariosActuales: 0,
+        voluntariosNecesarios: 1,
+      }));
+      setSolicitudes(mapeadas);
+    }).catch(() => setSolicitudes([]));
+
+    api.getVoluntarios().then(data => {
+      const mapeados = data.map((v: any, i: number) => ({
+        uid: String(v.idVoluntario),
+        nombre: v.usuario?.nombres ?? "Voluntario",
+        iniciales: v.usuario?.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2) ?? "??",
+        puntosKI: Math.max(0, 10 - i * 2),
+        nivel: Math.max(1, 20 - i * 3),
+        titulo: i === 0 ? "Ultra Instinto" : i === 1 ? "Super Saiyajin Blue" : "Super Saiyajin",
+        color: "#dbeafe",
+      }));
+      setGuerreros(mapeados);
+    }).catch(() => setGuerreros([]));
+
+    // Obtener rol del usuario actual
+    if (user?.email) {
+      api.getUsuarioPorCorreo(user.email).then((u: any) => {
+        const rol = u.roles?.[0]?.rol?.nombreRol ?? "USUARIO";
+        setUserRol(rol);
+      }).catch(() => setUserRol(null));
+    }
+  }, [user]);
+
   const [filtroEstado, setFiltroEstado] = useState("Todas");
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [modalSolicitar, setModalSolicitar] = useState(false);
@@ -96,26 +85,174 @@ export default function HomePage() {
   const filtradas = solicitudes.filter(s => {
     const matchEstado =
       filtroEstado === "Todas" ? true :
-      filtroEstado === "Abiertas" ? s.estado === "abierta" :
-      filtroEstado === "Progreso" ? s.estado === "en-progreso" :
-      s.estado === "completada";
+        filtroEstado === "Abiertas" ? s.estado === "abierta" :
+          filtroEstado === "Progreso" ? s.estado === "en-progreso" :
+            s.estado === "completada";
     const matchCat = filtroCategoria === "Todas" || s.categoria === filtroCategoria;
     return matchEstado && matchCat;
   });
 
   const handleSubmitSolicitud = async (data: any) => {
-    // TODO: enviar a tu API Spring Boot
-    console.log("Nueva solicitud:", data);
+
+    try {
+
+      if (!user?.email) {
+        alert("Debes iniciar sesión");
+        return;
+      }
+
+      // Obtener usuario desde backend
+      const usuario = await api.getUsuarioPorCorreo(user.email);
+
+      // MAPEAR CATEGORÍA -> ID
+      const categoriasMap: Record<string, number> = {
+        "Alimentos": 1,
+        "Transporte": 2,
+        "Cuidado de Niños": 3,
+        "Educación": 4,
+        "Salud": 5,
+        "Hogar": 6,
+        "Otro": 7,
+      };
+
+      const nuevaSolicitud = {
+
+        titulo: data.titulo,
+
+        descripcion: data.descripcion,
+
+        ubicacion: data.ubicacion,
+
+        usuario: {
+          idUsuario: usuario.idUsuario
+        },
+
+        // AQUÍ ESTABA EL ERROR
+        categoria: {
+          idCategoria: categoriasMap[data.categoria]
+        },
+
+        estado: {
+          idEstado: 1
+        },
+
+        urgencia: {
+          idUrgencia: Number(data.id_urgencia)
+        }
+      };
+
+      console.log("ENVIANDO:", nuevaSolicitud);
+
+      await api.crearSolicitud(nuevaSolicitud);
+
+      // RECARGAR SOLICITUDES
+      const solicitudesActualizadas = await api.getSolicitudes();
+
+      const mapeadas = solicitudesActualizadas.map((s: any) => ({
+
+        id: String(s.idSolicitud),
+
+        titulo: s.titulo,
+
+        categoria: s.categoria?.nombreCategoria ?? "Otro",
+
+        descripcion: s.descripcion,
+
+        ubicacion: s.ubicacion ?? "SJL",
+
+        estado:
+          s.estado?.nombreEstado
+            ?.toLowerCase()
+            .replace("_", "-") ?? "abierta",
+
+        autorNombre: s.usuario?.nombres ?? "Anónimo",
+
+        autorIniciales:
+          s.usuario?.nombres
+            ?.split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .slice(0, 2) ?? "??",
+
+        fecha: new Date(s.fechaSolicitud).toLocaleDateString(
+          "es-PE",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        ),
+
+        voluntariosActuales: 0,
+
+        voluntariosNecesarios: 1,
+
+      }));
+
+      setSolicitudes(mapeadas);
+
+      setModalSolicitar(false);
+
+      alert("Solicitud creada correctamente");
+
+    } catch (error) {
+
+      console.error("ERROR COMPLETO:", error);
+
+      alert("Error al crear solicitud");
+
+    }
+
   };
 
-  const handleSubmitOferta = async (solicitudId: string, data: any) => {
-    // TODO: enviar a tu API Spring Boot
-    console.log("Oferta para:", solicitudId, data);
-  };
+  const handleSubmitOferta = async (
+    solicitudId: string,
+    data: any
+  ) => {
 
+    try {
+
+      if (!user?.email) {
+        alert("Debes iniciar sesión");
+        return;
+      }
+
+      const usuario = await api.getUsuarioPorCorreo(user.email);
+
+      const nuevaDonacion = {
+
+        mensaje: data.mensaje,
+
+        usuario: {
+          idUsuario: usuario.idUsuario
+        },
+
+        solicitud: {
+          idSolicitud: Number(solicitudId)
+        }
+
+      };
+
+      await api.crearDonacion(nuevaDonacion);
+
+      setModalOfrecer(null);
+
+      alert("Oferta enviada correctamente");
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Error al enviar oferta");
+
+    }
+  };
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <Navbar onNuevaSolicitud={() => setModalSolicitar(true)} />
+      <Navbar
+        onNuevaSolicitud={() => setModalSolicitar(true)}
+        puedeCrearSolicitud={userRol !== "VOLUNTARIO"}
+      />
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 24px" }}>
         {/* Banner informativo */}
@@ -130,7 +267,7 @@ export default function HomePage() {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
             </svg>
           </div>
           <div>
@@ -164,7 +301,7 @@ export default function HomePage() {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M3 6h18M7 12h10M11 18h2"/>
+                  <path d="M3 6h18M7 12h10M11 18h2" />
                 </svg>
                 <span style={{ fontSize: 14, fontWeight: 600 }}>Filtros</span>
               </div>
@@ -245,10 +382,10 @@ export default function HomePage() {
 // ---- Stat card ----
 function StatCard({ icon, label, value }: { icon: string; value: number; label: string }) {
   const icons: Record<string, React.ReactNode> = {
-    "doc": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>,
-    "check-blue": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>,
-    "clock": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
-    "check-green": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>,
+    "doc": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></svg>,
+    "check-blue": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>,
+    "clock": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>,
+    "check-green": <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>,
   };
 
   return (
