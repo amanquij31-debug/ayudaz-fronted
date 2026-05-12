@@ -1,23 +1,76 @@
 const API_URL = "http://localhost:8080/api";
 
+// =========================
+// HEADERS AUTH
+// =========================
+
+const getHeaders = () => {
+
+    const token = localStorage.getItem("token");
+
+    return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+    };
+};
+
 export const api = {
+
+    // =========================
+    // AUTH ADMIN
+    // =========================
+
+    loginAdmin: async (
+        correo: string,
+        password: string
+    ) => {
+
+        const res = await fetch(
+            `${API_URL}/admin/login`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    correo,
+                    password,
+                }),
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error("Credenciales inválidas");
+        }
+
+        return res.json();
+    },
 
     // =========================
     // USUARIOS
     // =========================
 
-    getUsuarioPorCorreo: async (correo: string) => {
+    getUsuarioPorCorreo: async (
+        correo: string
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/usuarios/correo/${correo}`
+            `${API_URL}/usuarios/correo/${correo}`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (res.status === 404) {
-            throw new Error("Usuario no encontrado");
+            throw new Error(
+                "Usuario no encontrado"
+            );
         }
 
         if (!res.ok) {
-            throw new Error("Error al obtener usuario");
+            throw new Error(
+                "Error al obtener usuario"
+            );
         }
 
         return res.json();
@@ -26,191 +79,314 @@ export const api = {
     obtenerUsuarios: async () => {
 
         const res = await fetch(
-            `${API_URL}/usuarios`
+            `${API_URL}/admin/usuarios`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener usuarios");
+            throw new Error(
+                "Error al obtener usuarios"
+            );
         }
 
         return res.json();
     },
 
-    crearUsuario: async (data: any) => {
+    crearUsuario: async (
+        data: any
+    ) => {
 
         const res = await fetch(
             `${API_URL}/usuarios`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al crear usuario");
+            throw new Error(
+                "Error al crear usuario"
+            );
         }
 
         return res.json();
     },
 
-    actualizarUsuario: async (id: number, data: any) => {
+    actualizarUsuario: async (
+        id: number,
+        data: any
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/usuarios/${id}`,
+            `${API_URL}/admin/usuarios/${id}`,
             {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al actualizar usuario");
+            throw new Error(
+                "Error al actualizar usuario"
+            );
         }
 
         return res.json();
     },
 
-    eliminarUsuario: async (id: number) => {
+    eliminarUsuario: async (
+        id: number
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/usuarios/${id}`,
+            `${API_URL}/admin/usuarios/${id}`,
             {
                 method: "DELETE",
+                headers: getHeaders(),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al eliminar usuario");
+            throw new Error(
+                "Error al eliminar usuario"
+            );
         }
+    },
+
+    cambiarRol: async (
+        id: number,
+        rol: string
+    ) => {
+
+        const res = await fetch(
+            `${API_URL}/admin/usuarios/${id}/rol`,
+            {
+                method: "PUT",
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    rol,
+                }),
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                "Error al cambiar rol"
+            );
+        }
+
+        return res.json();
     },
 
     // =========================
     // SOLICITUDES
     // =========================
 
-    getSolicitudes: async () => {
-
-        const res = await fetch(
-            `${API_URL}/solicitudes`
-        );
-
-        if (!res.ok) {
-            throw new Error("Error al obtener solicitudes");
-        }
-
-        return res.json();
-    },
-
     obtenerSolicitudes: async () => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes`
+            `${API_URL}/admin/solicitudes`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener solicitudes");
+            throw new Error(
+                "Error al obtener solicitudes"
+            );
         }
 
         return res.json();
     },
 
-    getSolicitudesPorEstado: async (estado: string) => {
+    getSolicitudes: async () => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes/estado/${estado}`
+            `${API_URL}/solicitudes`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener solicitudes");
+            throw new Error(
+                "Error al obtener solicitudes"
+            );
         }
 
         return res.json();
     },
 
-    getSolicitudesPorCategoria: async (id: number) => {
+    getSolicitudesPorEstado: async (
+        estado: string
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes/categoria/${id}`
+            `${API_URL}/solicitudes/estado/${estado}`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener solicitudes");
+            throw new Error(
+                "Error al obtener solicitudes"
+            );
         }
 
         return res.json();
     },
 
-    getSolicitudesPorUsuario: async (id: number) => {
+    getSolicitudesPorCategoria: async (
+        id: number
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes/usuario/${id}`
+            `${API_URL}/solicitudes/categoria/${id}`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener solicitudes");
+            throw new Error(
+                "Error al obtener solicitudes"
+            );
         }
 
         return res.json();
     },
 
-    crearSolicitud: async (data: any) => {
+    getSolicitudesPorUsuario: async (
+        id: number
+    ) => {
+
+        const res = await fetch(
+            `${API_URL}/solicitudes/usuario/${id}`,
+            {
+                headers: getHeaders(),
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                "Error al obtener solicitudes"
+            );
+        }
+
+        return res.json();
+    },
+
+    crearSolicitud: async (
+        data: any
+    ) => {
 
         const res = await fetch(
             `${API_URL}/solicitudes`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al crear solicitud");
+            throw new Error(
+                "Error al crear solicitud"
+            );
         }
 
         return res.json();
     },
 
-    actualizarSolicitud: async (id: number, data: any) => {
+    actualizarSolicitud: async (
+        id: number,
+        data: any
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes/${id}`,
+            `${API_URL}/admin/solicitudes/${id}`,
             {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al actualizar solicitud");
+            throw new Error(
+                "Error al actualizar solicitud"
+            );
         }
 
         return res.json();
     },
 
-    eliminarSolicitud: async (id: number) => {
+    eliminarSolicitud: async (
+        id: number
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/solicitudes/${id}`,
+            `${API_URL}/admin/solicitudes/${id}`,
             {
                 method: "DELETE",
+                headers: getHeaders(),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al eliminar solicitud");
+            throw new Error(
+                "Error al eliminar solicitud"
+            );
         }
+    },
+
+    aprobarSolicitud: async (
+        id: number
+    ) => {
+
+        const res = await fetch(
+            `${API_URL}/admin/solicitudes/${id}/aprobar`,
+            {
+                method: "PUT",
+                headers: getHeaders(),
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                "Error al aprobar solicitud"
+            );
+        }
+
+        return res.json();
+    },
+
+    rechazarSolicitud: async (
+        id: number
+    ) => {
+
+        const res = await fetch(
+            `${API_URL}/admin/solicitudes/${id}/rechazar`,
+            {
+                method: "PUT",
+                headers: getHeaders(),
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                "Error al rechazar solicitud"
+            );
+        }
+
+        return res.json();
     },
 
     // =========================
@@ -220,31 +396,38 @@ export const api = {
     getVoluntarios: async () => {
 
         const res = await fetch(
-            `${API_URL}/voluntarios`
+            `${API_URL}/voluntarios`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener voluntarios");
+            throw new Error(
+                "Error al obtener voluntarios"
+            );
         }
 
         return res.json();
     },
 
-    crearVoluntario: async (data: any) => {
+    crearVoluntario: async (
+        data: any
+    ) => {
 
         const res = await fetch(
             `${API_URL}/voluntarios`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al crear voluntario");
+            throw new Error(
+                "Error al crear voluntario"
+            );
         }
 
         return res.json();
@@ -257,11 +440,16 @@ export const api = {
     getCategorias: async () => {
 
         const res = await fetch(
-            `${API_URL}/categorias`
+            `${API_URL}/categorias`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener categorías");
+            throw new Error(
+                "Error al obtener categorías"
+            );
         }
 
         return res.json();
@@ -271,14 +459,21 @@ export const api = {
     // ESTADOS
     // =========================
 
-    getEstados: async (tipoTabla: string) => {
+    getEstados: async (
+        tipoTabla: string
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/estados/tabla/${tipoTabla}`
+            `${API_URL}/estados/tabla/${tipoTabla}`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener estados");
+            throw new Error(
+                "Error al obtener estados"
+            );
         }
 
         return res.json();
@@ -291,44 +486,58 @@ export const api = {
     getDonaciones: async () => {
 
         const res = await fetch(
-            `${API_URL}/donaciones`
+            `${API_URL}/donaciones`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener donaciones");
+            throw new Error(
+                "Error al obtener donaciones"
+            );
         }
 
         return res.json();
     },
 
-    getDonacionesPorSolicitud: async (id: number) => {
+    getDonacionesPorSolicitud: async (
+        id: number
+    ) => {
 
         const res = await fetch(
-            `${API_URL}/donaciones/solicitud/${id}`
+            `${API_URL}/donaciones/solicitud/${id}`,
+            {
+                headers: getHeaders(),
+            }
         );
 
         if (!res.ok) {
-            throw new Error("Error al obtener donaciones");
+            throw new Error(
+                "Error al obtener donaciones"
+            );
         }
 
         return res.json();
     },
 
-    crearDonacion: async (data: any) => {
+    crearDonacion: async (
+        data: any
+    ) => {
 
         const res = await fetch(
             `${API_URL}/donaciones`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getHeaders(),
                 body: JSON.stringify(data),
             }
         );
 
         if (!res.ok) {
-            throw new Error("Error al crear donación");
+            throw new Error(
+                "Error al crear donación"
+            );
         }
 
         return res.json();

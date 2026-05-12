@@ -183,11 +183,11 @@ export default function SolicitudCard({ solicitud, onOfrecer }: Props) {
             {solicitud.estado !== "completada" && (
                 <button
                     onClick={() => {
-    if (!user) return;
-    if (!puedeAyudar) return;
+                        if (!user) return;
+                        if (!puedeAyudar) return;
 
-    return onOfrecer(solicitud);
-}}
+                        return onOfrecer(solicitud);
+                    }}
                     disabled={!puedeAyudar}
                     style={{
                         width: "100%",

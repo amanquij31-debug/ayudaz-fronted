@@ -9,26 +9,37 @@ export default function AdminDashboard() {
 
     useEffect(() => {
 
-        const admin = localStorage.getItem("admin");
+        const token =
+            localStorage.getItem(
+                "token"
+            );
 
-        if (!admin) {
-            router.push("/admin/login");
+        if (!token) {
+
+            router.push(
+                "/admin/login"
+            );
         }
 
-       
     }, []);
 
     // =========================
     // CERRAR SESIÓN
     // =========================
+
     const cerrarSesion = () => {
 
-        localStorage.removeItem("admin");
+        localStorage.removeItem(
+            "token"
+        );
 
-        router.push("/login");
+        router.push(
+            "/admin/login"
+        );
     };
 
     return (
+
         <div
             style={{
                 minHeight: "100vh",
@@ -38,10 +49,12 @@ export default function AdminDashboard() {
         >
 
             {/* HEADER */}
+
             <div
                 style={{
                     display: "flex",
-                    justifyContent: "space-between",
+                    justifyContent:
+                        "space-between",
                     alignItems: "center",
                     marginBottom: 32,
                 }}
@@ -57,6 +70,7 @@ export default function AdminDashboard() {
                 </h1>
 
                 {/* BOTÓN LOGOUT */}
+
                 <button
                     onClick={cerrarSesion}
                     style={{
@@ -64,7 +78,8 @@ export default function AdminDashboard() {
                         color: "white",
                         border: "none",
                         borderRadius: 10,
-                        padding: "10px 18px",
+                        padding:
+                            "10px 18px",
                         cursor: "pointer",
                         fontWeight: 600,
                         fontSize: 14,
@@ -72,32 +87,44 @@ export default function AdminDashboard() {
                 >
                     Cerrar sesión
                 </button>
+
             </div>
 
             {/* CARDS */}
+
             <div
                 style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateColumns:
+                        "1fr 1fr",
                     gap: 20,
                 }}
             >
 
                 <button
-                    onClick={() => router.push("/admin/usuarios")}
+                    onClick={() =>
+                        router.push(
+                            "/admin/usuarios"
+                        )
+                    }
                     style={card}
                 >
                     Administrar Usuarios
                 </button>
 
                 <button
-                    onClick={() => router.push("/admin/solicitudes")}
+                    onClick={() =>
+                        router.push(
+                            "/admin/solicitudes"
+                        )
+                    }
                     style={card}
                 >
                     Administrar Solicitudes
                 </button>
 
             </div>
+
         </div>
     );
 }
